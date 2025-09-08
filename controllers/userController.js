@@ -251,7 +251,6 @@ console.log(targetUserId);
     }
 };
 
-// POST /api/users/follow-request/respond
 const respondToFollowRequest = async (req, res) => {
     try {
         const currentUserId = req.user.id;
@@ -268,19 +267,32 @@ const respondToFollowRequest = async (req, res) => {
             return res.status(400).json({ message: 'No follow request found from this user', success: false });
         }
 
-        if (action === 'approve') {
-            await Promise.all([
-                User.findByIdAndUpdate(currentUserId, {
-                    $pull: { followRequests: requesterId },
-                    $addToSet: { followers: requesterId }
-                }),
-                User.findByIdAndUpdate(requesterId, {
-                    $addToSet: { following: currentUserId }
-                })
-            ]);
-            return res.status(200).json({ message: 'Follow request approved', success: true });
+      if (action === 'approve') {
+    await Promise.all([
+        User.findByIdAndUpdate(currentUserId, {
+            $pull: { followRequests: requesterId },
+            $addToSet: { followers: requesterId }
+        }),
+        User.findByIdAndUpdate(requesterId, {
+            $addToSet: { following: currentUserId }
+        })
+    ]);
 
-        } else if (action === 'reject') {
+    return res.status(200).json({
+        message: 'Follow request approved',
+        success: true,
+        user: {
+            _id: requester._id,
+            username: requester.username,
+            profilePicture: requester.profilePicture || null,
+            bio: requester.bio || "",
+        }
+    });
+}
+
+        
+        
+        else if (action === 'reject') {
             await Promise.all([
                 User.findByIdAndUpdate(currentUserId, {
                     $pull: { followRequests: requesterId }
@@ -454,6 +466,47 @@ const searchUsers = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+// POST /api/users/follow-back/:userId
+const followBack = async (req, res) => {
+  try {
+    const currentUserId = req.user.id; // logged-in user
+    const { userId } = req.params;     // jis user ko follow back karna hai
+    
+
+    if (currentUserId === userId) {
+      return res.status(400).json({ message: "You cannot follow yourself", success: false });
+    }
+
+    const currentUser = await User.findById(currentUserId);
+    const targetUser = await User.findById(userId);
+
+    if (!currentUser || !targetUser) {
+      return res.status(404).json({ message: "User not found", success: false });
+    }
+
+    // ✅ Check: kya target user already current user ka follower hai?
+    if (!currentUser.followers.includes(userId)) {
+      return res.status(400).json({ message: "This user is not your follower yet", success: false });
+    }
+
+    // ✅ Already following?
+    if (currentUser.following.includes(userId)) {
+      return res.status(400).json({ message: "You already follow this user", success: false });
+    }
+
+    // 🔹 Follow Back
+    await Promise.all([
+      User.findByIdAndUpdate(currentUserId, { $addToSet: { following: userId } }),
+      User.findByIdAndUpdate(userId, { $addToSet: { followers: currentUserId } })
+    ]);
+
+    res.status(200).json({ message: "Followed back successfully", success: true });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Something went wrong", success: false });
+  }
+};
 
 
 module.exports = {
@@ -463,6 +516,7 @@ module.exports = {
     searchUsers,
     // getProfile,
     changePassword,
+    followBack,
     sendOrCancelFollowRequest,
     editProfile,
     followOrUnfollowUser,

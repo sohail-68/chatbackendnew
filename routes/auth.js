@@ -20,6 +20,7 @@ const {
     sendOrCancelFollowRequest,
     respondToFollowRequest,
     getFollowRequests,
+    followBack,
 } = require('../controllers/userController'); // Ensure the path is correct
 
 const router = express.Router();
@@ -47,6 +48,7 @@ router.post('/users/follow-request/respond', isAuthenticated, respondToFollowReq
 
 router.get('/users/follow-requests', isAuthenticated, getFollowRequests);
 router.post('/follow/:id', isAuthenticated, followOrUnfollowUser); // Assuming follow/unfollow is a POST action
+router.post("/follow-back/:userId", isAuthenticated, followBack);
 
 // Get All Posts by User (requires authentication)
 router.get('/posts/:id', isAuthenticated, getUserPosts); // Fetch user posts

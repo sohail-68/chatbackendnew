@@ -9,7 +9,7 @@
 // const server = http.createServer(app);
 // const io = new Server(server, {
 //     cors: {
-//         origin: "http://localhost:3000", // Update this with your frontend URL
+//         origin: "http://localhost:5001", // Update this with your frontend URL
 //         methods: ["GET", "POST"],
 //     },
 // });
@@ -106,12 +106,10 @@ require('dotenv').config();
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-    cors: {
-        origin: ["http://localhost:3000", // Update this with your frontend URL
-
-        ],
-        methods: ["GET", "POST"],
-    },
+  cors: {
+    origin: "https://chatf-771g.onrender.com",
+    methods: ["GET", "POST"],
+  },
 });
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true, limit: '5mb' }));
@@ -127,29 +125,29 @@ app.use(cors());
 io.on("connection", (socket) => {
   console.log("⚡ User connected:", socket.id);
 
-  socket.on("join", (userId) => {
+  socket.on("joinRoom", (userId) => {
     socket.join(userId);
     console.log(`📥 User ${userId} joined their room`);
   });
 
-  socket.on("sendMessage", async (data) => { // async बनाएं
-    const { senderId, receiverId, content } = data;
+  socket.on("sendMessage", async (data) => {
+    const { sender, receiver, content } = data;  // 👈 change names to match frontend
 
     try {
       const Message = require("./models/Message");
-      const newMessage = new Message({ 
-        sender: senderId, 
-        receiver: receiverId, 
-        content 
-      });
-      
-      const savedMessage = await newMessage.save(); // await का उपयोग करें
+      const newMessage = new Message({ sender, receiver, content });
+      const savedMessage = await newMessage.save();
 
-      // Send to receiver instantly
-      io.to(receiverId).emit("receiveMessage", savedMessage);
+      // send to specific user room
+      io.to(receiver).emit("receiveMessage", savedMessage);
+      io.to(receiver).emit("newNotification", {
+        _id: savedMessage._id,
+        sender,
+        content,
+        createdAt: savedMessage.createdAt,
 
-      // Send back to sender for confirmation
-      io.to(senderId).emit("receiveMessage", savedMessage);
+    });
+
     } catch (error) {
       console.error("Message save error:", error);
     }
@@ -159,6 +157,7 @@ io.on("connection", (socket) => {
     console.log("❌ User disconnected:", socket.id);
   });
 });
+
 
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
