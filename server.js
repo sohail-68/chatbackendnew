@@ -9,7 +9,7 @@
 // const server = http.createServer(app);
 // const io = new Server(server, {
 //     cors: {
-//         origin: "http://localhost:5001", // Update this with your frontend URL
+//         origin: "https://chatb-vrft.onrender.com", // Update this with your frontend URL
 //         methods: ["GET", "POST"],
 //     },
 // });
@@ -107,7 +107,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "https://chatf-771g.onrender.com",
+    origin: "https://chatb-vrft.onrender.com",
     methods: ["GET", "POST"],
   },
 });
