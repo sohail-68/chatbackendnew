@@ -107,7 +107,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "https://chatb-vrft.onrender.com",
+    origin: "https://chatbackendnew-1.onrender.com",
     methods: ["GET", "POST"],
   },
 });
