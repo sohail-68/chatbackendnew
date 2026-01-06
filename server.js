@@ -107,7 +107,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "https://chatbackendnew-1.onrender.com",
+    origin: "https://chatf-771g.onrender.com",
     methods: ["GET", "POST"],
   },
 });
