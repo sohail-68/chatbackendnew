@@ -394,21 +394,43 @@ const getUserPosts = async (req, res) => {
 
 // Bookmark a Post
 const bookmarkPost = async (req, res) => {
-    try {
-        const post = await Post.findById(req.params.postId);
-        if (!post) return res.status(404).json({ error: 'Post not found' });
-
-        const user = await User.findById(req.user.id);
-        if (!user.bookmarks.includes(post.id)) {
-            user.bookmarks.push(post.id);
-            await user.save();
-            res.status(200).json({ message: 'Post bookmarked' });
-        } else {
-            res.status(400).json({ error: 'Post already bookmarked' });
-        }
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+  try {
+    const post = await Post.findById(req.params.postId);
+    if (!post) {
+      return res.status(404).json({ success: false, message: 'Post not found' });
     }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const isBookmarked = user.bookmarks.includes(post.id);
+
+    if (isBookmarked) {
+      // Toggle OFF
+      user.bookmarks = user.bookmarks.filter(
+        (id) => id.toString() !== post.id.toString()
+      );
+      await user.save();
+      return res.status(200).json({
+        success: true,
+        bookmarked: false,
+        message: 'Removed from bookmarks',
+      });
+    }
+
+    // Toggle ON
+    user.bookmarks.push(post.id);
+    await user.save();
+    return res.status(200).json({
+      success: true,
+      bookmarked: true,
+      message: 'Post bookmarked',
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
 };
 const deleteAllBookmarks = async (req, res) => {
     try {
